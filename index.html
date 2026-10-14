@@ -1,0 +1,1704 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ティアラ 販売・顧客管理</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* ═══════════════════════════════════════════
+   Design tokens — Tiffany Blue palette
+   Layout: fixed bottom nav, scrollable content
+═══════════════════════════════════════════ */
+:root {
+  --bg:       #F0FAFA;
+  --bg2:      #E0F4F4;
+  --bg3:      #C8EBEB;
+  --fg:       #0D2B2B;
+  --fg2:      #2E6060;
+  --fg3:      #5A9090;
+  --acc:      #0ABAB5;   /* Tiffany Blue */
+  --acc2:     #08D4CE;
+  --acc-lt:   #D0F5F4;
+  --grn:      #0A8A70;
+  --grn-lt:   #C8EDDF;
+  --amb:      #C47A1A;
+  --amb-lt:   #FDF0D5;
+  --blu:      #0A7EB5;
+  --blu-lt:   #C8E8F5;
+  --pur:      #7A5AAA;
+  --pur-lt:   #EAE0FA;
+  --border:   rgba(10,186,181,.18);
+  --shadow:   0 2px 8px rgba(10,186,181,.10);
+  --r:        12px;
+  --font:     'Noto Sans JP', sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:     #071A1A;
+    --bg2:    #0D2626;
+    --bg3:    #133232;
+    --fg:     #E0F4F4;
+    --fg2:    #80C8C8;
+    --fg3:    #4A8888;
+    --acc:    #0ABAB5;
+    --acc2:   #08D4CE;
+    --acc-lt: #083030;
+    --grn:    #10C090;
+    --grn-lt: #063828;
+    --amb:    #E8A030;
+    --amb-lt: #3A2500;
+    --blu:    #30A8E0;
+    --blu-lt: #062840;
+    --pur:    #A880E0;
+    --pur-lt: #28104A;
+    --border: rgba(10,186,181,.20);
+    --shadow: 0 2px 8px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:     #071A1A; --bg2: #0D2626; --bg3: #133232;
+  --fg:     #E0F4F4; --fg2: #80C8C8; --fg3: #4A8888;
+  --acc:    #0ABAB5; --acc2: #08D4CE; --acc-lt: #083030;
+  --grn:    #10C090; --grn-lt: #063828;
+  --amb:    #E8A030; --amb-lt: #3A2500;
+  --blu:    #30A8E0; --blu-lt: #062840;
+  --pur:    #A880E0; --pur-lt: #28104A;
+  --border: rgba(10,186,181,.20);
+  --shadow: 0 2px 8px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--fg);
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.hdr {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  background: var(--acc);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.hdr-title { font-size: 16px; font-weight: 700; letter-spacing: .03em; }
+.hdr-subtitle { font-size: 10px; opacity: .8; margin-top: 1px; }
+.hdr-sync { background: rgba(255,255,255,.2); border: none; color: #fff;
+  border-radius: 20px; padding: 4px 10px; font-size: 12px; font-family: var(--font);
+  cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.hdr-sync:active { background: rgba(255,255,255,.35); }
+
+/* ── Content area ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 80px;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Bottom nav ── */
+.nav {
+  position: fixed;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1; border: none; background: none; color: var(--fg3);
+  padding: 8px 4px; cursor: pointer; font-family: var(--font);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 10px; transition: color .15s;
+}
+.nav-btn.active { color: var(--acc); }
+.nav-icon { font-size: 20px; line-height: 1; }
+
+/* ── Cards & sections ── */
+.section-title {
+  font-size: 13px; font-weight: 700; color: var(--fg2);
+  margin-bottom: 10px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--acc-lt);
+  display: flex; align-items: center; gap: 6px;
+}
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+/* ── Form controls ── */
+label { display: block; font-size: 12px; color: var(--fg2); margin-bottom: 4px; font-weight: 500; }
+input, select, textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: var(--font);
+  color: var(--fg); appearance: none;
+  transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--acc);
+}
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 30px; }
+textarea { resize: vertical; min-height: 70px; }
+.form-row { margin-bottom: 12px; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+/* ── Stepper ── */
+.stepper { display: flex; align-items: center; gap: 0; }
+.step-btn {
+  width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--fg); font-size: 20px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font); -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+  touch-action: manipulation;
+}
+.step-btn:active { background: var(--acc-lt); }
+.step-val {
+  flex: 1; text-align: center; font-size: 18px; font-weight: 700;
+  font-variant-numeric: tabular-nums; padding: 0 8px; min-width: 48px;
+}
+.product-row {
+  display: flex; align-items: center;
+  gap: 8px; margin-bottom: 10px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.product-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.product-label { font-size: 13px; color: var(--fg); white-space: nowrap; min-width: 80px; flex-shrink: 0; }
+.product-row .stepper { flex: 1; }
+.product-sales-val { font-size: 12px; color: var(--fg3); text-align: right; min-width: 56px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+/* ── Buttons ── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 14px; border-radius: var(--r);
+  border: none; cursor: pointer; font-size: 15px; font-weight: 700;
+  font-family: var(--font); transition: opacity .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.btn:active { opacity: .8; transform: scale(.98); }
+.btn-primary { background: var(--acc); color: #fff; }
+.btn-secondary { background: var(--bg3); color: var(--fg); }
+.btn-grn { background: var(--grn); color: #fff; }
+.btn-sm {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border-radius: 20px; border: none;
+  cursor: pointer; font-size: 12px; font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-sm:active { opacity: .75; }
+.btn-danger { background: #c0392b; color: #fff; }
+
+/* ── Weather chips ── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.chip {
+  padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--bg3); cursor: pointer; font-size: 13px;
+  font-family: var(--font); color: var(--fg);
+  -webkit-tap-highlight-color: transparent; transition: all .15s;
+}
+.chip.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+/* ── Temp display ── */
+.temp-row { display: flex; align-items: center; gap: 0; }
+.temp-val {
+  flex: 1; text-align: center; font-size: 22px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Event chips ── */
+.event-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.event-chip {
+  padding: 6px 12px; border-radius: 20px; font-size: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  cursor: pointer; font-family: var(--font); color: var(--fg);
+  -webkit-tap-highlight-color: transparent; transition: all .15s;
+}
+.event-chip.active { background: var(--amb-lt); border-color: var(--amb); color: var(--amb); }
+
+/* ── Summary bar ── */
+.summary-bar {
+  background: var(--acc);
+  color: #fff;
+  border-radius: var(--r);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 16px;
+}
+.summary-item { text-align: center; }
+.summary-num { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.summary-lbl { font-size: 11px; opacity: .85; margin-top: 2px; }
+
+/* ── Customer cards ── */
+.cust-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.cust-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cust-name { font-weight: 700; font-size: 15px; }
+.cust-kana { font-size: 11px; color: var(--fg3); margin-top: 1px; }
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 500;
+  white-space: nowrap;
+}
+.badge-birth { background: var(--acc-lt); color: var(--acc); }
+.badge-dm    { background: var(--grn-lt); color: var(--grn); }
+.badge-alert { background: var(--amb-lt); color: var(--amb); }
+.cust-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.cust-actions { display: flex; gap: 8px; margin-top: 10px; }
+.alert-banner {
+  background: var(--amb-lt); border: 1px solid var(--amb);
+  border-radius: var(--r); padding: 10px 14px; margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--amb);
+}
+.filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.filter-row input, .filter-row select {
+  flex: 1; padding: 8px 12px; font-size: 13px;
+}
+
+/* ── Empty state ── */
+.empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--fg3); font-size: 14px; line-height: 1.8;
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* ── Chart / Report ── */
+.report-section { margin-bottom: 20px; }
+.chart-wrap { overflow-x: auto; margin-top: 8px; }
+.bar-chart { display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-lbl { font-size: 12px; color: var(--fg2); width: 36px; flex-shrink: 0; text-align: right; }
+.bar-track { flex: 1; background: var(--bg3); border-radius: 4px; height: 22px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; display: flex; align-items: center; padding-left: 6px; }
+.bar-val { font-size: 11px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.stat-tile {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 12px; text-align: center;
+}
+.stat-tile-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--acc); }
+.stat-tile-lbl { font-size: 11px; color: var(--fg3); margin-top: 4px; }
+.loading-msg { text-align: center; padding: 30px; color: var(--fg3); }
+.sync-status {
+  font-size: 11px; color: var(--fg3); text-align: center;
+  margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+
+/* ── Analytics tab ── */
+.analytics-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; gap: 8px;
+}
+.period-toggle {
+  display: flex; background: var(--bg3); border-radius: 20px;
+  padding: 3px; gap: 2px;
+}
+.period-btn {
+  padding: 5px 14px; border-radius: 16px; border: none;
+  font-size: 12px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; color: var(--fg3); background: transparent;
+  transition: all .2s; touch-action: manipulation;
+}
+.period-btn.active { background: var(--acc); color: #fff; }
+.period-nav {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+}
+.period-nav-label {
+  font-size: 13px; font-weight: 700; color: var(--fg);
+  min-width: 90px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.period-nav-btn {
+  background: none; border: none; cursor: pointer; color: var(--acc);
+  font-size: 16px; padding: 0 4px; touch-action: manipulation;
+  font-family: var(--font); line-height: 1;
+}
+.period-nav-btn:active { opacity: .6; }
+.rank-chart { display: flex; flex-direction: column; gap: 8px; }
+.rank-row { display: flex; align-items: center; gap: 8px; }
+.rank-num { font-size: 11px; font-weight: 700; color: var(--fg3); width: 16px; flex-shrink: 0; text-align: center; }
+.rank-lbl { font-size: 12px; color: var(--fg); min-width: 72px; flex-shrink: 0; }
+.rank-track { flex: 1; background: var(--bg3); border-radius: 4px; height: 24px; overflow: hidden; }
+.rank-fill { height: 100%; border-radius: 4px; transition: width .6s ease; display: flex; align-items: center; padding-left: 8px; }
+.rank-val { font-size: 11px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+.rank-sub { font-size: 11px; color: var(--fg3); min-width: 52px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.donut-wrap { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.donut-canvas-wrap { flex-shrink: 0; }
+.donut-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.legend-row { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-name { font-size: 12px; color: var(--fg); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.legend-pct { font-size: 12px; font-weight: 600; color: var(--fg2); font-variant-numeric: tabular-nums; }
+.metric-toggle { display: flex; gap: 6px; margin-bottom: 8px; }
+.metric-btn {
+  padding: 4px 12px; border-radius: 12px; border: 1px solid var(--border);
+  font-size: 11px; font-family: var(--font); cursor: pointer;
+  background: var(--bg3); color: var(--fg3); touch-action: manipulation;
+}
+.metric-btn.active { background: var(--acc-lt); color: var(--acc); border-color: var(--acc); font-weight: 600; }
+.analytics-loading { text-align: center; padding: 40px 20px; color: var(--fg3); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--fg); color: var(--bg);
+  padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity .25s, transform .25s; z-index: 999; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Settings ── */
+.setting-row { margin-bottom: 16px; }
+.setting-row label { margin-bottom: 6px; }
+.url-status { font-size: 11px; margin-top: 4px; }
+.url-ok  { color: var(--grn); }
+.url-ng  { color: #c0392b; }
+.url-tip { color: var(--fg3); }
+
+/* ── Password screen ── */
+#pwScreen {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 0;
+}
+#pwScreen[hidden] { display: none !important; }
+.pw-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  width: 90%; max-width: 360px;
+  box-shadow: 0 8px 32px rgba(10,186,181,.15);
+  display: flex; flex-direction: column; gap: 0;
+}
+.pw-logo { font-size: 36px; text-align: center; margin-bottom: 6px; }
+.pw-name { font-size: 18px; font-weight: 700; text-align: center;
+  color: var(--acc); margin-bottom: 2px; letter-spacing: .04em; }
+.pw-sub  { font-size: 11px; text-align: center; color: var(--fg3); margin-bottom: 24px; }
+.pw-label { font-size: 12px; color: var(--fg2); font-weight: 500; margin-bottom: 6px; }
+.pw-input-wrap { position: relative; margin-bottom: 8px; }
+.pw-input {
+  width: 100%; padding: 12px 44px 12px 14px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 16px; font-family: var(--font);
+  color: var(--fg); letter-spacing: .08em;
+}
+.pw-input:focus { outline: none; border-color: var(--acc); }
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 18px;
+  color: var(--fg3); padding: 0; line-height: 1;
+}
+.pw-error {
+  font-size: 12px; color: #c0392b;
+  text-align: center; min-height: 18px; margin-bottom: 10px;
+}
+.pw-btn {
+  width: 100%; padding: 14px;
+  background: var(--acc); color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 700; font-family: var(--font);
+  cursor: pointer; touch-action: manipulation;
+  transition: opacity .15s;
+}
+.pw-btn:active { opacity: .8; }
+.pw-remember { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; cursor: pointer; }
+.pw-remember input[type="checkbox"] { display: none; }
+.pw-remember .cb-box {
+  width: 18px; height: 18px; border: 2px solid var(--acc); border-radius: 4px;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: transparent; transition: background .15s;
+}
+.pw-remember input[type="checkbox"]:checked + .cb-box {
+  background: var(--acc);
+}
+.pw-remember input[type="checkbox"]:checked + .cb-box::after {
+  content: '✓'; font-size: 12px; font-weight: 700; color: #fff; line-height: 1;
+}
+.pw-remember label { font-size: 12px; color: var(--fg2); cursor: pointer; margin: 0; }
+</style>
+
+<!-- Password Screen -->
+<div id="pwScreen">
+  <div class="pw-box">
+    <div class="pw-logo">🍰</div>
+    <div class="pw-name">pâtisserie TIARA</div>
+    <div class="pw-sub">販売・顧客管理システム</div>
+    <div class="pw-label">パスワード</div>
+    <div class="pw-input-wrap">
+      <input class="pw-input" type="password" id="pwInput"
+        placeholder="パスワードを入力"
+        autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')checkPw()">
+      <button class="pw-toggle" onclick="togglePwVis()" tabindex="-1">👁</button>
+    </div>
+    <div class="pw-error" id="pwError"></div>
+    <label class="pw-remember" for="pwRemember">
+      <input type="checkbox" id="pwRemember">
+      <span class="cb-box"></span>
+      <span style="font-size:12px;color:var(--fg2);">このデバイスでは次回から自動ログイン</span>
+    </label>
+    <button class="pw-btn" onclick="checkPw()">ログイン</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="hdr">
+  <div>
+    <div class="hdr-title">🍰 pâtisserie TIARA</div>
+    <div class="hdr-subtitle">販売・顧客管理 v3.0</div>
+  </div>
+  <button class="hdr-sync" onclick="syncFromSheet()" id="syncBtn">☁️ 同期</button>
+</div>
+
+<!-- Content -->
+<div class="content">
+  <!-- 📊 販売記録 -->
+  <div class="tab-panel active" id="panel-sales">
+    <div class="section-title">📊 販売記録</div>
+    <div class="card">
+      <!-- 日付 -->
+      <div class="form-row">
+        <label>日付</label>
+        <input type="date" id="salesDate">
+      </div>
+      <!-- 天気 -->
+      <div class="form-row">
+        <label>天気</label>
+        <div class="chip-row">
+          <button class="chip" data-weather="晴" onclick="setWeather(this)">☀️ 晴</button>
+          <button class="chip" data-weather="曇" onclick="setWeather(this)">⛅ 曇</button>
+          <button class="chip" data-weather="雨" onclick="setWeather(this)">🌧️ 雨</button>
+          <button class="chip" data-weather="雪" onclick="setWeather(this)">❄️ 雪</button>
+        </div>
+      </div>
+      <!-- 気温 -->
+      <div class="form-row">
+        <label>最高気温（℃）</label>
+        <div class="temp-row">
+          <button class="step-btn" onclick="changeTemp(-1)">−</button>
+          <div class="temp-val" id="tempVal">25</div>
+          <button class="step-btn" onclick="changeTemp(+1)">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品群 -->
+    <div class="card">
+      <div class="section-title">🧁 商品群別販売数</div>
+      <div id="productRows"></div>
+      <div class="summary-bar" style="margin-top:10px;margin-bottom:0;">
+        <div class="summary-item">
+          <div class="summary-num" id="totalItems">0</div>
+          <div class="summary-lbl">合計（個）</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-num" id="totalSales">¥0</div>
+          <div class="summary-lbl">合計売上</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- イベント -->
+    <div class="card">
+      <div class="form-row">
+        <label>イベント</label>
+        <div class="event-grid" id="eventChips"></div>
+      </div>
+      <div class="form-row" style="margin-top:10px;margin-bottom:0;">
+        <label>メモ</label>
+        <textarea id="salesMemo" placeholder="気づいたこと、特記事項など"></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="saveSalesBtn" onclick="saveSales()">💾 販売記録を保存</button>
+  </div>
+
+  <!-- 👤 顧客一覧 -->
+  <div class="tab-panel" id="panel-customers">
+    <div id="birthdayAlert"></div>
+    <div class="filter-row">
+      <input type="search" id="searchInput" placeholder="🔍 お名前検索" oninput="renderCustomers()">
+      <select id="filterMonth" onchange="renderCustomers()">
+        <option value="">誕生月すべて</option>
+        <option>1月</option><option>2月</option><option>3月</option><option>4月</option>
+        <option>5月</option><option>6月</option><option>7月</option><option>8月</option>
+        <option>9月</option><option>10月</option><option>11月</option><option>12月</option>
+      </select>
+    </div>
+    <div class="sync-status" id="custSyncStatus">☁️ 同期するとスプレッドシートから最新データを取得します</div>
+    <div id="customerList"></div>
+  </div>
+
+  <!-- ➕ 新規登録 -->
+  <div class="tab-panel" id="panel-register">
+    <div class="section-title">➕ お得意様登録</div>
+    <div class="card">
+      <div class="form-row-2">
+        <div class="form-row" style="margin-bottom:0;">
+          <label>お名前 *</label>
+          <input type="text" id="regName" placeholder="田中 花子">
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+          <label>よみがな</label>
+          <input type="text" id="regKana" placeholder="たなか はなこ">
+        </div>
+      </div>
+      <div class="form-row-2" style="margin-top:12px;">
+        <div class="form-row" style="margin-bottom:0;">
+          <label>誕生月</label>
+          <select id="regBirth">
+            <option value="">選択してください</option>
+            <option>1月</option><option>2月</option><option>3月</option><option>4月</option>
+            <option>5月</option><option>6月</option><option>7月</option><option>8月</option>
+            <option>9月</option><option>10月</option><option>11月</option><option>12月</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+          <label>DM送付方法</label>
+          <select id="regDM">
+            <option value="">なし</option>
+            <option>はがき</option><option>LINE</option><option>Instagram</option>
+            <option>メール</option><option>電話</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <label>購入イベント（複数選択可）</label>
+        <div class="event-grid" id="regEventChips"></div>
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <label>住所 / SNSアカウント</label>
+        <input type="text" id="regAddr" placeholder="住所またはSNSアカウント">
+      </div>
+      <div class="form-row">
+        <label>メモ</label>
+        <textarea id="regMemo" placeholder="アレルギー・好み・特記事項など" style="min-height:60px;"></textarea>
+      </div>
+    </div>
+    <button class="btn btn-grn" id="regBtn" onclick="registerCustomer()">✅ 登録する</button>
+  </div>
+
+  <!-- 📮 DM管理 -->
+  <div class="tab-panel" id="panel-dm">
+    <div class="section-title">📮 DM送付管理</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="chip active" id="dmTab-this" onclick="showDMTab('this')">今月</button>
+      <button class="chip" id="dmTab-next" onclick="showDMTab('next')">来月</button>
+    </div>
+    <div id="dmList"></div>
+  </div>
+
+  <!-- 📈 集計 -->
+  <div class="tab-panel" id="panel-report">
+    <!-- period switch + nav -->
+    <div class="analytics-header">
+      <div class="period-toggle">
+        <button class="period-btn active" id="ptoggle-monthly" onclick="setPeriod('monthly')">月次</button>
+        <button class="period-btn" id="ptoggle-yearly" onclick="setPeriod('yearly')">年次</button>
+      </div>
+      <div class="period-nav">
+        <button class="period-nav-btn" onclick="shiftPeriod(-1)">◀</button>
+        <div class="period-nav-label" id="periodLabel">--</div>
+        <button class="period-nav-btn" onclick="shiftPeriod(+1)">▶</button>
+      </div>
+    </div>
+    <div class="sync-status" id="reportSyncStatus">☁️ 同期ボタンで最新データを取得します</div>
+    <div id="reportContent">
+      <div class="analytics-loading">
+        <div style="font-size:40px;margin-bottom:12px;">📊</div>
+        <div>右上の「同期」ボタンを押すと<br>集計データを読み込みます</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⚙️ 設定 -->
+  <div class="tab-panel" id="panel-settings">
+    <div class="section-title">⚙️ 設定</div>
+    <div class="card">
+      <div class="setting-row">
+        <label>GAS Web App URL</label>
+        <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <div class="url-tip url-status">デプロイ後のURLを貼り付けてください</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveGasUrl()" style="margin-top:4px;">💾 URLを保存</button>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <div class="section-title">商品群の設定</div>
+      <div id="productSettings"></div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <div class="section-title">🔑 パスワード変更</div>
+
+      <!-- ティアラさん用 -->
+      <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px;">🍰 ティアラさん用</div>
+      <div class="form-row">
+        <label>現在のパスワード</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwCurrentA" placeholder="現在のパスワード"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwCurrentA')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>新しいパスワード</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwNewA1" placeholder="新しいパスワード（4文字以上）"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwNewA1')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>新しいパスワード（確認）</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwNewA2" placeholder="もう一度入力"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwNewA2')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div id="pwChangeMsgA" style="font-size:12px;min-height:18px;margin-bottom:8px;text-align:center;"></div>
+      <button class="btn btn-secondary" onclick="changePassword('shopowner')" style="margin-bottom:20px;">🔑 ティアラさん用を変更</button>
+
+      <!-- 伊東用 -->
+      <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px;">🏢 伊東用</div>
+      <div class="form-row">
+        <label>現在のパスワード</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwCurrentB" placeholder="現在のパスワード"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwCurrentB')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>新しいパスワード</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwNewB1" placeholder="新しいパスワード（4文字以上）"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwNewB1')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>新しいパスワード（確認）</label>
+        <div class="pw-input-wrap">
+          <input class="pw-input" type="password" id="pwNewB2" placeholder="もう一度入力"
+            style="font-size:14px;padding:10px 44px 10px 12px;letter-spacing:.04em;">
+          <button class="pw-toggle" onclick="toggleFieldVis('pwNewB2')" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div id="pwChangeMsgB" style="font-size:12px;min-height:18px;margin-bottom:8px;text-align:center;"></div>
+      <button class="btn btn-secondary" onclick="changePassword('supporter')">🔑 伊東用を変更</button>
+
+      <div style="font-size:11px;color:var(--fg3);margin-top:12px;line-height:1.6;">
+        ※ 変更後は自動ログイン設定がリセットされます
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <div class="section-title">バージョン情報</div>
+      <div style="font-size:13px;color:var(--fg2);line-height:1.8;">
+        ティアラ 販売・顧客管理アプリ<br>
+        Version 3.0<br>
+        スプレッドシート連携（読み書き対応）<br>
+        開発：長崎県よろず支援拠点
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<nav class="nav">
+  <button id="nav-sales" class="nav-btn active" onclick="showTab('sales',this)">
+    <span class="nav-icon">📊</span>販売
+  </button>
+  <button id="nav-customers" class="nav-btn" onclick="showTab('customers',this)">
+    <span class="nav-icon">👤</span>顧客
+  </button>
+  <button class="nav-btn" onclick="showTab('register',this)">
+    <span class="nav-icon">➕</span>登録
+  </button>
+  <button id="nav-dm" class="nav-btn" onclick="showTab('dm',this)">
+    <span class="nav-icon">📮</span>DM
+  </button>
+  <button class="nav-btn" onclick="showTab('report',this)">
+    <span class="nav-icon">📈</span>集計
+  </button>
+  <button id="nav-settings" class="nav-btn" onclick="showTab('settings',this)">
+    <span class="nav-icon">⚙️</span>設定
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ══════════════════════════════════════════════
+// PASSWORD CONFIG
+// ここでパスワードを変更してください（初期値）
+// ══════════════════════════════════════════════
+const DEFAULT_PASSWORDS = {
+  shopowner: 'tiara2024',
+  supporter: 'yorozu',
+};
+// 実際に使うパスワード（localStorageで上書き可能）
+let PASSWORDS = { ...DEFAULT_PASSWORDS };
+
+// 認証済みかどうか
+let currentRole = null;
+
+// localStorage から保存済みパスワードを読み込む
+(function loadStoredPasswords() {
+  try {
+    const stored = localStorage.getItem('tiara_passwords');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.shopowner) PASSWORDS.shopowner = parsed.shopowner;
+      if (parsed.supporter) PASSWORDS.supporter = parsed.supporter;
+    }
+  } catch(e){}
+})();
+
+function checkPw() {
+  const val = document.getElementById('pwInput').value;
+  if (val === PASSWORDS.shopowner || val === PASSWORDS.supporter) {
+    currentRole = val === PASSWORDS.shopowner ? 'shopowner' : 'supporter';
+    // 「次回から自動ログイン」チェック
+    try {
+      const remember = document.getElementById('pwRemember').checked;
+      if (remember) {
+        localStorage.setItem('tiara_autologin', currentRole);
+      } else {
+        localStorage.removeItem('tiara_autologin');
+      }
+    } catch(e){}
+    grantAccess();
+  } else {
+    const el = document.getElementById('pwError');
+    el.textContent = 'パスワードが正しくありません';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+    setTimeout(() => { el.textContent = ''; }, 2500);
+  }
+}
+
+function grantAccess() {
+  try { sessionStorage.setItem('tiara_role', currentRole); } catch(e){}
+  document.getElementById('pwScreen').hidden = true;
+  init();
+  // ログイン直後に自動同期
+  setTimeout(() => syncFromSheet(), 300);
+}
+
+function applyRole(role) {
+  // 両ロールとも全機能使用可能 — 将来の制限のためにフックだけ残す
+}
+
+function togglePwVis() {
+  const inp = document.getElementById('pwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function toggleFieldVis(id) {
+  const inp = document.getElementById(id);
+  if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function changePassword(role) {
+  // role: 'shopowner' (ティアラさん用) or 'supporter' (伊東用)
+  const suffix  = role === 'shopowner' ? 'A' : 'B';
+  const current = document.getElementById('pwCurrent' + suffix).value;
+  const new1    = document.getElementById('pwNew' + suffix + '1').value;
+  const new2    = document.getElementById('pwNew' + suffix + '2').value;
+  const msgEl   = document.getElementById('pwChangeMsg' + suffix);
+
+  // 検証：対象ロールのパスワードのみ確認
+  if (current !== PASSWORDS[role]) {
+    msgEl.style.color = '#c0392b';
+    msgEl.textContent = '❌ 現在のパスワードが正しくありません';
+    return;
+  }
+  if (new1.length < 4) {
+    msgEl.style.color = '#c0392b';
+    msgEl.textContent = '❌ 新しいパスワードは4文字以上にしてください';
+    return;
+  }
+  if (new1 !== new2) {
+    msgEl.style.color = '#c0392b';
+    msgEl.textContent = '❌ 新しいパスワードが一致しません';
+    return;
+  }
+
+  // 対象ロールのみ更新
+  PASSWORDS[role] = new1;
+  try {
+    localStorage.setItem('tiara_passwords', JSON.stringify(PASSWORDS));
+    // 自動ログインもリセット
+    localStorage.removeItem('tiara_autologin');
+    sessionStorage.setItem('tiara_role', currentRole);
+  } catch(e){}
+
+  // フォームクリア
+  document.getElementById('pwCurrent' + suffix).value = '';
+  document.getElementById('pwNew' + suffix + '1').value = '';
+  document.getElementById('pwNew' + suffix + '2').value = '';
+  const label = role === 'shopowner' ? 'ティアラさん用' : '伊東用';
+  msgEl.style.color = 'var(--grn)';
+  msgEl.textContent = `✅ ${label}パスワードを変更しました（自動ログイン設定はリセットされました）`;
+  toast(`🔑 ${label}パスワードを変更しました`);
+}
+
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const PRODUCTS = [
+  { id:'A', label:'A群', desc:'ホールケーキ', price:3500 },
+  { id:'B', label:'B群', desc:'カットケーキ', price:500  },
+  { id:'C', label:'C群', desc:'焼き菓子',     price:300  },
+  { id:'D', label:'D群', desc:'ロールケーキ', price:400  },
+  { id:'E', label:'E群', desc:'その他',       price:500  },
+];
+const EVENTS = ['誕生日','記念日','クリスマス','ホワイトデー','バレンタイン','母の日','父の日','イベント','通常'];
+const REG_EVENTS = ['誕生日ケーキ','記念日ケーキ','クリスマスケーキ','ホワイトデー','バレンタイン','母の日','父の日'];
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let state = {
+  weather: '',
+  temp: 25,
+  products: { A:0, B:0, C:0, D:0, E:0 },
+  events: [],
+  customers: [],
+  summary: null,
+  lastSync: null,
+};
+let gasUrl = 'https://script.google.com/macros/s/AKfycbzzMQJgPXuaxhdfiu9ydtsahEXBiTtfOaqd050SO2Hz63MAQ048THdFxcfrLwp-mhNZ/exec';
+let saving = false;
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init() {
+  try {
+    const stored = localStorage.getItem('tiara_gas_url');
+    if (stored) gasUrl = stored; // localStorageに保存済みがあれば優先、なければコード埋め込みURLを維持
+  } catch(e){}
+  if (gasUrl) document.getElementById('gasUrl').value = gasUrl;
+
+  // Load saved prices
+  loadSavedPrices();
+
+  // Set today's date as default
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth()+1).padStart(2,'0');
+  const dd = String(today.getDate()).padStart(2,'0');
+  document.getElementById('salesDate').value = `${yyyy}-${mm}-${dd}`;
+
+  // Load local customers as fallback
+  try {
+    const saved = localStorage.getItem('tiara_customers');
+    if (saved) state.customers = JSON.parse(saved);
+  } catch(e){}
+
+  buildProductRows();
+  buildEventChips();
+  buildRegEventChips();
+  buildProductSettings();
+  renderCustomers();
+  renderDM('this');
+  checkBirthdays();
+  updatePeriodLabel();
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// SYNC FROM SHEET
+// ══════════════════════════════════════════════
+async function syncFromSheet() {
+  if (!gasUrl) { toast('⚙️ 先にGAS URLを設定してください'); showTab('settings', document.querySelectorAll('.nav-btn')[5]); return; }
+  const btn = document.getElementById('syncBtn');
+  if (btn) { btn.textContent = '⏳ 同期中...'; btn.disabled = true; }
+  try {
+    // Fetch customers
+    const custData = await fetchGAS('getCustomers');
+    if (custData && custData.status === 'ok' && custData.customers) {
+      // スプレッドシートの日本語ヘッダーをアプリ内キーへ変換
+      state.customers = custData.customers.map(c => ({
+        name:       c['名前']       || c['name']       || '',
+        kana:       c['よみがな']   || c['kana']       || '',
+        birthMonth: c['誕生月']     || c['birthMonth'] || '',
+        events:     c['購入イベント']|| c['イベント']   || c['events']     || '',
+        dmType:     c['DM送付方法'] || c['DM種別']     || c['dmType']     || '',
+        addr:       c['住所']       || c['addr']        || '',
+        line:       c['LINE/Instagram'] || c['line']   || '',
+        memo:       c['メモ']       || c['memo']        || '',
+        dmThisYear: c['DM今年']     || c['DM今年']     || c['dmThisYear'] || '',
+        dmNextYear: c['DM来年']     || c['dmNextYear'] || '',
+      }));
+      try { localStorage.setItem('tiara_customers', JSON.stringify(state.customers)); } catch(e){}
+      renderCustomers();
+      checkBirthdays();
+      const statusEl = document.getElementById('custSyncStatus');
+      if (statusEl) statusEl.textContent = '✅ ' + now() + ' 同期済み（' + state.customers.length + '件）';
+    }
+    // Fetch analytics for current period
+    await loadAnalytics();
+    toast('✅ 同期完了！');
+  } catch(err) {
+    const msg = '❌ 同期失敗：' + err.message;
+    toast(msg);
+    // エラー詳細を設定画面にも表示
+    const statusEl = document.getElementById('custSyncStatus');
+    if (statusEl) { statusEl.style.color = '#c0392b'; statusEl.textContent = msg; }
+    console.error('syncFromSheet error:', err);
+  } finally {
+    if (btn) { btn.textContent = '☁️ 同期'; btn.disabled = false; }
+  }
+}
+
+function fetchGAS(action) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'gasCallback_' + Date.now();
+    const base = gasUrl.replace(/\?.*$/, '');
+    const url = base + '?action=' + action + '&callback=' + cbName + '&t=' + Date.now();
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout'));
+    }, 15000);
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = function() {
+      cleanup();
+      reject(new Error('Script load error'));
+    };
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+function now() {
+  return new Date().toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ══════════════════════════════════════════════
+// SALES
+// ══════════════════════════════════════════════
+function buildProductRows() {
+  const container = document.getElementById('productRows');
+  container.innerHTML = PRODUCTS.map(p => `
+    <div class="product-row">
+      <div class="product-label">${p.label}<br><span style="color:var(--fg3);font-size:10px;">${p.desc}</span></div>
+      <div class="stepper">
+        <button class="step-btn" onclick="changeProduct('${p.id}',-1)">−</button>
+        <div class="step-val" id="prod${p.id}">0</div>
+        <button class="step-btn" onclick="changeProduct('${p.id}',+1)">＋</button>
+      </div>
+      <div class="product-sales-val">¥<span id="prodSales${p.id}">0</span></div>
+    </div>
+  `).join('');
+}
+
+function buildEventChips() {
+  document.getElementById('eventChips').innerHTML = EVENTS.map(e =>
+    `<button class="event-chip" onclick="toggleEvent(this,'${e}')">${e}</button>`
+  ).join('');
+}
+
+function buildRegEventChips() {
+  document.getElementById('regEventChips').innerHTML = REG_EVENTS.map(e =>
+    `<button class="event-chip" onclick="toggleRegEvent(this,'${e}')">${e}</button>`
+  ).join('');
+}
+
+function setWeather(btn) {
+  document.querySelectorAll('[data-weather]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.weather = btn.dataset.weather;
+}
+
+function changeTemp(d) {
+  state.temp = Math.min(40, Math.max(-10, state.temp + d));
+  document.getElementById('tempVal').textContent = state.temp;
+}
+
+function changeProduct(id, d) {
+  const p = PRODUCTS.find(p => p.id === id);
+  state.products[id] = Math.max(0, (state.products[id] || 0) + d);
+  document.getElementById('prod' + id).textContent = state.products[id];
+  document.getElementById('prodSales' + id).textContent = (state.products[id] * p.price).toLocaleString();
+  updateSalesTotal();
+}
+
+function updateSalesTotal() {
+  let items = 0, sales = 0;
+  PRODUCTS.forEach(p => {
+    items += state.products[p.id] || 0;
+    sales += (state.products[p.id] || 0) * p.price;
+  });
+  document.getElementById('totalItems').textContent = items;
+  document.getElementById('totalSales').textContent = '¥' + sales.toLocaleString();
+}
+
+let activeEvents = new Set();
+function toggleEvent(btn, ev) {
+  if (activeEvents.has(ev)) { activeEvents.delete(ev); btn.classList.remove('active'); }
+  else { activeEvents.add(ev); btn.classList.add('active'); }
+}
+
+let activeRegEvents = new Set();
+function toggleRegEvent(btn, ev) {
+  if (activeRegEvents.has(ev)) { activeRegEvents.delete(ev); btn.classList.remove('active'); }
+  else { activeRegEvents.add(ev); btn.classList.add('active'); }
+}
+
+async function saveSales() {
+  if (saving) return;
+  const items = PRODUCTS.reduce((s,p) => s + (state.products[p.id]||0), 0);
+  const sales  = PRODUCTS.reduce((s,p) => s + (state.products[p.id]||0)*p.price, 0);
+  const today  = new Date();
+  const days   = ['日','月','火','水','木','金','土'];
+  const dateInput = document.getElementById('salesDate').value;
+  const salesDate = dateInput ? new Date(dateInput) : today;
+  const payload = {
+    type: 'sales',
+    date: salesDate.toLocaleDateString('ja-JP'),
+    day:  days[salesDate.getDay()],
+    weather: state.weather || '不明',
+    temp: state.temp,
+    A: state.products.A||0, B: state.products.B||0,
+    C: state.products.C||0, D: state.products.D||0, E: state.products.E||0,
+    total: items, sales,
+    event: Array.from(activeEvents).join('・'),
+    memo: document.getElementById('salesMemo').value,
+  };
+  if (!gasUrl) { toast('⚙️ GAS URLを設定してください'); return; }
+  saving = true;
+  const btn = document.getElementById('saveSalesBtn');
+  btn.textContent = '送信中...'; btn.disabled = true;
+  try {
+    const res = await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
+    const json = await res.json();
+    if (json.status === 'ok') {
+      toast('✅ 販売記録を保存しました！');
+      resetSales();
+    } else { toast('❌ 保存失敗'); }
+  } catch(e) { toast('❌ エラー：' + e.message); }
+  finally { saving = false; btn.textContent = '💾 販売記録を保存'; btn.disabled = false; }
+}
+
+function resetSales() {
+  state.products = { A:0, B:0, C:0, D:0, E:0 };
+  PRODUCTS.forEach(p => {
+    document.getElementById('prod' + p.id).textContent = '0';
+    document.getElementById('prodSales' + p.id).textContent = '0';
+  });
+  activeEvents.clear();
+  document.querySelectorAll('.event-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('salesMemo').value = '';
+  document.getElementById('tempVal').textContent = '25';
+  state.temp = 25;
+  state.weather = '';
+  document.querySelectorAll('[data-weather]').forEach(b => b.classList.remove('active'));
+  updateSalesTotal();
+}
+
+// ══════════════════════════════════════════════
+// CUSTOMERS
+// ══════════════════════════════════════════════
+function checkBirthdays() {
+  const thisMonth = new Date().getMonth() + 1 + '月';
+  const alerts = state.customers.filter(c => c.birthMonth === thisMonth && c.dmThisYear !== '済');
+  const el = document.getElementById('birthdayAlert');
+  if (alerts.length > 0) {
+    el.innerHTML = `<div class="alert-banner">🎂 今月誕生日：${alerts.map(c=>'<strong>'+c.name+'</strong>').join('、')} さん（DM未送付）</div>`;
+  } else { el.innerHTML = ''; }
+}
+
+function renderCustomers() {
+  const search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const month  = document.getElementById('filterMonth').value || '';
+  let list = state.customers;
+  if (search) list = list.filter(c => (c.name||'').toLowerCase().includes(search) || (c.kana||'').toLowerCase().includes(search));
+  if (month)  list = list.filter(c => c.birthMonth === month);
+
+  const el = document.getElementById('customerList');
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>${state.customers.length === 0 ? '同期ボタンで読み込むか、お客様を登録してください' : '該当するお客様が見つかりません'}</div>`;
+    return;
+  }
+  const thisMonth = new Date().getMonth() + 1 + '月';
+  el.innerHTML = list.map((c, i) => {
+    const isBirth = c.birthMonth === thisMonth;
+    const badges = [];
+    if (c.birthMonth) badges.push(`<span class="badge badge-birth">🎂 ${c.birthMonth}</span>`);
+    if (c.events) badges.push(`<span class="badge badge-dm">${c.events}</span>`);
+    if (isBirth && c.dmThisYear !== '済') badges.push(`<span class="badge badge-alert">📮 DM未送</span>`);
+    return `<div class="cust-card">
+      <div class="cust-header">
+        <div>
+          <div class="cust-name">${c.name}</div>
+          ${c.kana ? `<div class="cust-kana">${c.kana}</div>` : ''}
+        </div>
+        <button class="btn-sm btn-danger" onclick="deleteCustomer(${i})">🗑</button>
+      </div>
+      ${badges.length ? `<div class="cust-meta">${badges.join('')}</div>` : ''}
+      ${c.memo ? `<div style="font-size:12px;color:var(--fg3);margin-top:6px;">📝 ${c.memo}</div>` : ''}
+      <div class="cust-actions">
+        <button class="btn-sm" style="background:var(--grn-lt);color:var(--grn);" onclick="markDM('${c.name}')">📮 DM送付済みにする</button>
+        ${c.dmType ? `<span style="font-size:11px;color:var(--fg3);">送付：${c.dmType}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteCustomer(idx) {
+  const search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const month  = document.getElementById('filterMonth').value || '';
+  let list = state.customers;
+  if (search) list = list.filter(c => (c.name||'').toLowerCase().includes(search) || (c.kana||'').toLowerCase().includes(search));
+  if (month)  list = list.filter(c => c.birthMonth === month);
+  const target = list[idx];
+  if (!target) return;
+  state.customers = state.customers.filter(c => c !== target);
+  try { localStorage.setItem('tiara_customers', JSON.stringify(state.customers)); } catch(e){}
+  renderCustomers();
+  toast('🗑 削除しました');
+}
+
+async function markDM(name) {
+  if (!gasUrl) { toast('GAS URLを設定してください'); return; }
+  const c = state.customers.find(c => c.name === name);
+  if (c) { c.dmThisYear = '済'; }
+  try { localStorage.setItem('tiara_customers', JSON.stringify(state.customers)); } catch(e){}
+  renderCustomers();
+  try {
+    await fetch(gasUrl, { method:'POST', body: JSON.stringify({ type:'updateDM', name, dmThisYear:'済' }), mode:'no-cors' });
+    toast('📮 DM送付済みにしました！');
+  } catch(e) { toast('ローカルのみ更新（通信エラー）'); }
+}
+
+// ══════════════════════════════════════════════
+// REGISTER
+// ══════════════════════════════════════════════
+async function registerCustomer() {
+  const name = document.getElementById('regName').value.trim();
+  if (!name) { toast('お名前を入力してください'); return; }
+  if (saving) return;
+  const payload = {
+    type: 'customer',
+    name,
+    kana:       document.getElementById('regKana').value.trim(),
+    birthMonth: document.getElementById('regBirth').value,
+    events:     Array.from(activeRegEvents).join('・'),
+    dmType:     document.getElementById('regDM').value,
+    addr:       document.getElementById('regAddr').value.trim(),
+    memo:       document.getElementById('regMemo').value.trim(),
+  };
+
+  // Save locally first
+  state.customers.push({ ...payload, dmThisYear:'未送付', dmNextYear:'予定' });
+  try { localStorage.setItem('tiara_customers', JSON.stringify(state.customers)); } catch(e){}
+  renderCustomers();
+  checkBirthdays();
+
+  if (gasUrl) {
+    saving = true;
+    const btn = document.getElementById('regBtn');
+    btn.textContent = '送信中...'; btn.disabled = true;
+    try {
+      const res = await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
+      const json = await res.json();
+      if (json.status === 'ok') { toast('✅ 登録完了！スプレッドシートに保存しました'); }
+      else { toast('⚠️ ローカル保存のみ（送信失敗）'); }
+    } catch(e) { toast('⚠️ ローカル保存のみ（オフライン）'); }
+    finally { saving = false; btn.textContent = '✅ 登録する'; btn.disabled = false; }
+  } else { toast('✅ ローカルに登録しました（GAS URL未設定）'); }
+
+  // Reset form
+  document.getElementById('regName').value = '';
+  document.getElementById('regKana').value = '';
+  document.getElementById('regBirth').value = '';
+  document.getElementById('regDM').value = '';
+  document.getElementById('regAddr').value = '';
+  document.getElementById('regMemo').value = '';
+  activeRegEvents.clear();
+  document.querySelectorAll('#regEventChips .event-chip').forEach(c => c.classList.remove('active'));
+}
+
+// ══════════════════════════════════════════════
+// DM
+// ══════════════════════════════════════════════
+function showDMTab(tab) {
+  document.getElementById('dmTab-this').classList.toggle('active', tab==='this');
+  document.getElementById('dmTab-next').classList.toggle('active', tab==='next');
+  renderDM(tab);
+}
+
+function renderDM(tab) {
+  const today = new Date();
+  const m = tab === 'this' ? today.getMonth() + 1 : (today.getMonth() + 2 > 12 ? 1 : today.getMonth() + 2);
+  const month = m + '月';
+  const list = state.customers.filter(c => c.birthMonth === month);
+  const el = document.getElementById('dmList');
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📮</div>${month}の誕生日のお客様はいません</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="section-title">🎂 ${month}生まれのお客様（${list.length}名）</div>` +
+    list.map(c => `<div class="cust-card">
+      <div class="cust-header">
+        <div><div class="cust-name">${c.name}</div>${c.kana?`<div class="cust-kana">${c.kana}</div>`:''}</div>
+        <span class="badge ${c.dmThisYear==='済'?'badge-dm':'badge-alert'}">${c.dmThisYear==='済'?'✅ 済':'📮 未送付'}</span>
+      </div>
+      ${c.dmType?`<div style="font-size:12px;color:var(--fg3);margin-top:6px;">送付方法：${c.dmType}</div>`:''}
+      ${c.addr?`<div style="font-size:12px;color:var(--fg3);">📍 ${c.addr}</div>`:''}
+      ${c.dmThisYear!=='済'?`<div class="cust-actions"><button class="btn-sm" style="background:var(--grn-lt);color:var(--grn);" onclick="markDM('${c.name}')">📮 送付済みにする</button></div>`:''}
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// ANALYTICS
+// ══════════════════════════════════════════════
+let analyticsState = {
+  period: 'monthly',   // 'monthly' | 'yearly'
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1,
+  metric: 'amount',    // 'amount' | 'count'
+  data: null,
+  donutChart: null,
+};
+
+function setPeriod(p) {
+  analyticsState.period = p;
+  document.getElementById('ptoggle-monthly').classList.toggle('active', p === 'monthly');
+  document.getElementById('ptoggle-yearly').classList.toggle('active',  p === 'yearly');
+  updatePeriodLabel();
+  loadAnalytics();
+}
+
+function shiftPeriod(d) {
+  if (analyticsState.period === 'monthly') {
+    analyticsState.month += d;
+    if (analyticsState.month > 12) { analyticsState.month = 1;  analyticsState.year++; }
+    if (analyticsState.month < 1)  { analyticsState.month = 12; analyticsState.year--; }
+  } else {
+    analyticsState.year += d;
+  }
+  updatePeriodLabel();
+  loadAnalytics();
+}
+
+function updatePeriodLabel() {
+  const { period, year, month } = analyticsState;
+  document.getElementById('periodLabel').textContent =
+    period === 'monthly' ? `${year}年${month}月` : `${year}年`;
+}
+
+async function loadAnalytics() {
+  if (!gasUrl) return;
+  const { period, year, month } = analyticsState;
+  const el = document.getElementById('reportContent');
+  el.innerHTML = '<div class="analytics-loading"><div style="font-size:32px;">⏳</div><div>読み込み中...</div></div>';
+  document.getElementById('reportSyncStatus').textContent = '⏳ データを取得中...';
+
+  let action;
+  if (period === 'monthly') {
+    action = `getSummary&period=monthly&year=${year}&month=${month}`;
+  } else {
+    action = `getSummary&period=yearly&year=${year}`;
+  }
+
+  try {
+    const data = await fetchGAS(action);
+    if (data && data.status === 'ok') {
+      analyticsState.data = data;
+      document.getElementById('reportSyncStatus').textContent = '✅ ' + now() + ' 取得済み';
+      renderAnalytics(data);
+    } else {
+      el.innerHTML = '<div class="analytics-loading">データがありません</div>';
+      document.getElementById('reportSyncStatus').textContent = '⚠️ データなし';
+    }
+  } catch(e) {
+    el.innerHTML = '<div class="analytics-loading">❌ 取得失敗：' + e.message + '</div>';
+    document.getElementById('reportSyncStatus').textContent = '❌ 取得失敗';
+  }
+}
+
+const PRODUCT_COLORS = {
+  A: '#0ABAB5', B: '#7A5AAA', C: '#C47A1A', D: '#0A7EB5', E: '#0A8A70'
+};
+
+function renderAnalytics(data) {
+  const { period, year, month, metric } = analyticsState;
+  const s = data;
+
+  const totalCount = s.totalCount  || 0;
+  const totalDays  = s.totalDays   || 0;
+
+  // 設定の単価で商品別金額を再計算（GASの按分より正確）
+  const products = (s.products || []).map(p => {
+    const master = PRODUCTS.find(m => m.id === p.id);
+    const unitPrice = master ? (master.price || 0) : 0;
+    return { ...p, amount: p.count * unitPrice };
+  });
+  // 単価ベースの合計売上を再計算
+  const totalAmountByPrice = products.reduce((sum, p) => sum + p.amount, 0);
+  const totalSales = totalAmountByPrice || s.totalAmount || 0;
+
+  // サマリータイル
+  const periodLabel = period === 'monthly' ? `${year}年${month}月` : `${year}年`;
+  const tiles = `
+    <div class="stat-grid" style="margin-bottom:16px;">
+      <div class="stat-tile">
+        <div class="stat-tile-val">¥${totalSales >= 10000 ? (totalSales/10000).toFixed(1)+'<span style="font-size:12px;">万</span>' : totalSales.toLocaleString()}</div>
+        <div class="stat-tile-lbl">${periodLabel} 売上合計</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-val">${totalCount.toLocaleString()}<span style="font-size:12px;">個</span></div>
+        <div class="stat-tile-lbl">販売個数</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-val">${totalDays}<span style="font-size:12px;">日</span></div>
+        <div class="stat-tile-lbl">営業日数</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-tile-val">¥${totalDays > 0 ? Math.round(totalSales / totalDays).toLocaleString() : 0}</div>
+        <div class="stat-tile-lbl">1日平均売上</div>
+      </div>
+    </div>`;
+
+  // 商品別ランキング棒グラフ
+  const rankData = [...products].sort((a,b) =>
+    metric === 'amount' ? b.amount - a.amount : b.count - b.count
+  );
+  const maxVal = Math.max(...rankData.map(p => metric === 'amount' ? p.amount : p.count), 1);
+
+  const rankRows = rankData.map((p, i) => {
+    const val   = metric === 'amount' ? p.amount : p.count;
+    const sub   = metric === 'amount' ? `${p.count}個` : `¥${p.amount.toLocaleString()}`;
+    const pct   = Math.round(val / maxVal * 100);
+    const label = metric === 'amount' ? (val >= 10000 ? '¥'+(val/10000).toFixed(1)+'万' : '¥'+val.toLocaleString()) : val+'個';
+    const medal = ['🥇','🥈','🥉'][i] || (i+1)+'';
+    return `<div class="rank-row">
+      <div class="rank-num">${medal}</div>
+      <div class="rank-lbl">${p.name}<br><span style="color:var(--fg3);font-size:10px;">${p.desc||''}</span></div>
+      <div class="rank-track">
+        <div class="rank-fill" style="width:${pct}%;background:${PRODUCT_COLORS[p.id]||'var(--acc)'};">
+          ${val > 0 ? `<span class="rank-val">${label}</span>` : ''}
+        </div>
+      </div>
+      <div class="rank-sub">${sub}</div>
+    </div>`;
+  }).join('');
+
+  // 構成比ドーナツ
+  const donutId = 'donutChart';
+  const metricBtns = `
+    <div class="metric-toggle">
+      <button class="metric-btn ${metric==='amount'?'active':''}" onclick="setMetric('amount')">金額</button>
+      <button class="metric-btn ${metric==='count' ?'active':''}" onclick="setMetric('count')">個数</button>
+    </div>`;
+
+  // 天気別
+  const WEATHER_ICON = { '晴':'☀️', '曇':'☁️', '雨':'🌧️', '雪':'❄️' };
+  let weatherSection = '';
+  if (s.byWeather && s.byWeather.some(w => w.days > 0)) {
+    const maxW = Math.max(...s.byWeather.map(w => w.avgSales), 1);
+    const weatherRows = s.byWeather.map(w => {
+      const pct = Math.round(w.avgSales / maxW * 100);
+      const icon = WEATHER_ICON[w.weather] || '';
+      return `<div class="bar-row">
+        <div class="bar-lbl">${icon}${w.weather}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.max(pct,2)}%;background:var(--acc);">
+            ${w.days>0?`<span class="bar-val">¥${w.avgSales.toLocaleString()}<span style="font-size:10px;opacity:.7;">(${w.days}日)</span></span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    weatherSection = `
+      <div class="report-section">
+        <div class="section-title">🌤️ 天気別 平均売上</div>
+        <div class="bar-chart">${weatherRows}</div>
+      </div>`;
+  }
+
+  // 曜日別
+  let daySection = '';
+  if (s.byDay && s.byDay.some(d => d.days > 0)) {
+    const maxD = Math.max(...s.byDay.map(d => d.avgSales), 1);
+    const dayRows = s.byDay.map(d => {
+      const pct = Math.round(d.avgSales / maxD * 100);
+      return `<div class="bar-row">
+        <div class="bar-lbl">${d.day}曜</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.max(pct,2)}%;background:var(--pur);">
+            ${d.days>0?`<span class="bar-val">¥${d.avgSales.toLocaleString()} / ${d.avgCount}個<span style="font-size:10px;opacity:.7;">(${d.days}日)</span></span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    daySection = `
+      <div class="report-section">
+        <div class="section-title">📆 曜日別 平均売上・個数</div>
+        <div class="bar-chart">${dayRows}</div>
+      </div>`;
+  }
+
+  // 月別推移（年次モード時のみ）
+  let trendSection = '';
+  if (period === 'yearly' && s.monthly && s.monthly.length > 0) {
+    const maxM = Math.max(...s.monthly.map(m => m.sales), 1);
+    const trendBars = s.monthly.map(m => {
+      const pct = Math.round(m.sales / maxM * 100);
+      return `<div class="bar-row">
+        <div class="bar-lbl">${m.month}月</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${m.count>0?'var(--acc)':'var(--bg3)'};">
+            ${m.count>0?`<span class="bar-val">¥${(m.sales/10000).toFixed(1)}万</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    trendSection = `
+      <div class="report-section">
+        <div class="section-title">📅 月別売上推移</div>
+        <div class="bar-chart">${trendBars}</div>
+      </div>`;
+  }
+
+  document.getElementById('reportContent').innerHTML = `
+    ${tiles}
+    <div class="report-section">
+      <div class="section-title">🏆 商品群別ランキング</div>
+      ${metricBtns}
+      <div class="rank-chart">${rankRows}</div>
+    </div>
+    <div class="report-section">
+      <div class="section-title">🥧 構成比</div>
+      ${metricBtns.replace('metric-toggle','metric-toggle').replace("setMetric('amount')","setMetric2('amount')").replace("setMetric('count')","setMetric2('count')")}
+      <div class="donut-wrap">
+        <div class="donut-canvas-wrap">
+          <canvas id="${donutId}" width="140" height="140"></canvas>
+        </div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+    ${weatherSection}
+    ${daySection}
+    ${trendSection}
+  `;
+
+  drawDonut(products, metric);
+}
+
+function setMetric(m) {
+  analyticsState.metric = m;
+  if (analyticsState.data) renderAnalytics(analyticsState.data);
+}
+function setMetric2(m) { setMetric(m); }
+
+function drawDonut(products, metric) {
+  // destroy previous
+  if (analyticsState.donutChart) {
+    try { analyticsState.donutChart.destroy(); } catch(e){}
+    analyticsState.donutChart = null;
+  }
+  const canvas = document.getElementById('donutChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const labels = products.map(p => p.name);
+  const vals   = products.map(p => metric === 'amount' ? p.amount : p.count);
+  const colors = products.map(p => PRODUCT_COLORS[p.id] || '#999');
+  const total  = vals.reduce((a,b) => a+b, 0) || 1;
+
+  // Legend
+  const legendEl = document.getElementById('donutLegend');
+  if (legendEl) {
+    legendEl.innerHTML = products.map((p, i) => {
+      const pct = total > 0 ? Math.round(vals[i] / total * 100) : 0;
+      return `<div class="legend-row">
+        <div class="legend-dot" style="background:${colors[i]};"></div>
+        <div class="legend-name">${p.name}</div>
+        <div class="legend-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Detect dark mode for Chart.js
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+    (!document.documentElement.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const pluginColor = isDark ? '#E0F4F4' : '#0D2B2B';
+
+  analyticsState.donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2,
+      borderColor: isDark ? '#0D2626' : '#F0FAFA' }] },
+    options: {
+      responsive: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const v = item.raw;
+              const pct = Math.round(v / total * 100);
+              return metric === 'amount' ? `¥${v.toLocaleString()} (${pct}%)` : `${v}個 (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Legacy renderReport kept for backward compat (called by old syncFromSheet path)
+function renderReport() {
+  // redirect to new analytics if data available
+  if (analyticsState.data) renderAnalytics(analyticsState.data);
+}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function saveGasUrl() {
+  gasUrl = document.getElementById('gasUrl').value.trim();
+  try { localStorage.setItem('tiara_gas_url', gasUrl); } catch(e){}
+  const st = document.querySelector('.url-status');
+  if (gasUrl.startsWith('https://script.google.com')) {
+    st.textContent = '✅ 保存しました'; st.className = 'url-ok url-status';
+  } else {
+    st.textContent = '⚠️ URLを確認してください'; st.className = 'url-ng url-status';
+  }
+  toast('💾 URL保存完了');
+}
+
+function buildProductSettings() {
+  document.getElementById('productSettings').innerHTML = PRODUCTS.map(p =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-weight:600;">${p.label}　${p.desc}</div>
+        <div style="font-size:12px;color:var(--fg3);">代表単価</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:13px;color:var(--fg2);">¥</span>
+        <input type="number" id="price${p.id}" value="${p.price}" min="0" step="100"
+          style="width:80px;text-align:right;padding:6px 8px;font-size:14px;"
+          onchange="savePrice('${p.id}', this.value)">
+      </div>
+    </div>`
+  ).join('') + `<button class="btn btn-primary" onclick="applyPrices()" style="margin-top:12px;">💾 単価を保存</button>`;
+}
+
+function savePrice(id, val) {
+  const p = PRODUCTS.find(p => p.id === id);
+  if (p) p.price = parseInt(val) || 0;
+}
+
+function applyPrices() {
+  PRODUCTS.forEach(p => {
+    const el = document.getElementById('price' + p.id);
+    if (el) p.price = parseInt(el.value) || 0;
+  });
+  // localStorageに保存
+  try { localStorage.setItem('tiara_prices', JSON.stringify(PRODUCTS.map(p => ({id:p.id, price:p.price})))); } catch(e){}
+  buildProductRows();
+  updateSalesTotal();
+  toast('✅ 単価を保存しました');
+}
+
+function loadSavedPrices() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('tiara_prices') || '[]');
+    saved.forEach(s => { const p = PRODUCTS.find(p => p.id === s.id); if (p) p.price = s.price; });
+  } catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════════
+// START — パスワード認証チェック
+// ══════════════════════════════════════════════
+(function startApp() {
+  try {
+    // ① セッション内で認証済み（タブを閉じていない）
+    const session = sessionStorage.getItem('tiara_role');
+    if (session === 'shopowner' || session === 'supporter') {
+      currentRole = session;
+      document.getElementById('pwScreen').hidden = true;
+      init();
+      setTimeout(() => syncFromSheet(), 300);
+      return;
+    }
+    // ② 「次回から自動ログイン」が有効（localStorage に保存済み）
+    const auto = localStorage.getItem('tiara_autologin');
+    if (auto === 'shopowner' || auto === 'supporter') {
+      currentRole = auto;
+      try { sessionStorage.setItem('tiara_role', currentRole); } catch(e){}
+      document.getElementById('pwScreen').hidden = true;
+      init();
+      setTimeout(() => syncFromSheet(), 300);
+      return;
+    }
+  } catch(e){}
+  // 未認証 → パスワード画面を表示してフォーカス
+  document.getElementById('pwInput').focus();
+})();
+</script>
