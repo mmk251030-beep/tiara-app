@@ -533,6 +533,28 @@ textarea { resize: vertical; min-height: 70px; }
       </div>
     </div>
 
+    <!-- 販売タイプ -->
+    <div class="card">
+      <div class="form-row">
+        <label>販売タイプ</label>
+        <div class="chip-row">
+          <button class="chip active" id="saleType-store" onclick="setSaleType('store', this)">🏪 店頭</button>
+          <button class="chip" id="saleType-reserve" onclick="setSaleType('reserve', this)">📅 予約</button>
+        </div>
+      </div>
+      <div id="reservationField" style="display:none;">
+        <div class="form-row" style="margin-bottom:0;">
+          <label>お客様名（予約）</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="reservationSelect" style="flex:1;" onchange="onReservationSelect()">
+              <option value="">── 顧客リストから選ぶ ──</option>
+            </select>
+          </div>
+          <input type="text" id="reservationName" placeholder="または直接入力（初回予約など）" style="margin-top:6px;">
+        </div>
+      </div>
+    </div>
+
     <!-- イベント -->
     <div class="card">
       <div class="form-row">
@@ -1101,6 +1123,37 @@ function toggleRegEvent(btn, ev) {
   else { activeRegEvents.add(ev); btn.classList.add('active'); }
 }
 
+// ── 販売タイプ（店頭/予約）
+let currentSaleType = 'store';
+function setSaleType(type, btn) {
+  currentSaleType = type;
+  document.querySelectorAll('#saleType-store, #saleType-reserve').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const field = document.getElementById('reservationField');
+  if (type === 'reserve') {
+    field.style.display = '';
+    // 顧客リストをセレクトに反映
+    const sel = document.getElementById('reservationSelect');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">── 顧客リストから選ぶ ──</option>';
+    (state.customers || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.name || c;
+      opt.textContent = c.name || c;
+      sel.appendChild(opt);
+    });
+    sel.value = prev;
+  } else {
+    field.style.display = 'none';
+    document.getElementById('reservationSelect').value = '';
+    document.getElementById('reservationName').value = '';
+  }
+}
+function onReservationSelect() {
+  const sel = document.getElementById('reservationSelect');
+  if (sel.value) document.getElementById('reservationName').value = sel.value;
+}
+
 async function saveSales() {
   if (saving) return;
   const items = PRODUCTS.reduce((s,p) => s + (state.products[p.id]||0), 0);
@@ -1120,6 +1173,8 @@ async function saveSales() {
     total: items, sales,
     event: Array.from(activeEvents).join('・'),
     memo: document.getElementById('salesMemo').value,
+    saleType: currentSaleType,
+    reservationName: currentSaleType === 'reserve' ? (document.getElementById('reservationName').value.trim() || '') : '',
   };
   if (!gasUrl) { toast('⚙️ GAS URLを設定してください'); return; }
   saving = true;
@@ -1149,6 +1204,13 @@ function resetSales() {
   state.temp = 25;
   state.weather = '';
   document.querySelectorAll('[data-weather]').forEach(b => b.classList.remove('active'));
+  // 販売タイプをリセット
+  currentSaleType = 'store';
+  document.getElementById('saleType-store').classList.add('active');
+  document.getElementById('saleType-reserve').classList.remove('active');
+  document.getElementById('reservationField').style.display = 'none';
+  document.getElementById('reservationSelect').value = '';
+  document.getElementById('reservationName').value = '';
   updateSalesTotal();
 }
 
@@ -1397,6 +1459,18 @@ function renderAnalytics(data) {
 
   // サマリータイル
   const periodLabel = period === 'monthly' ? `${year}年${month}月` : `${year}年`;
+  // 店頭/予約 内訳（GASが返す場合のみ表示）
+  const storeSales = s.storeSales != null ? s.storeSales : null;
+  const reserveSales = s.reserveSales != null ? s.reserveSales : null;
+  const saleTypeTiles = (storeSales !== null && reserveSales !== null) ? `
+      <div class="stat-tile" style="background:var(--grn-lt);border-color:var(--grn);">
+        <div class="stat-tile-val" style="color:var(--grn);">¥${storeSales >= 10000 ? (storeSales/10000).toFixed(1)+'<span style="font-size:12px;">万</span>' : storeSales.toLocaleString()}</div>
+        <div class="stat-tile-lbl">🏪 店頭売上</div>
+      </div>
+      <div class="stat-tile" style="background:var(--pur-lt);border-color:var(--pur);">
+        <div class="stat-tile-val" style="color:var(--pur);">¥${reserveSales >= 10000 ? (reserveSales/10000).toFixed(1)+'<span style="font-size:12px;">万</span>' : reserveSales.toLocaleString()}</div>
+        <div class="stat-tile-lbl">📅 予約売上</div>
+      </div>` : '';
   const tiles = `
     <div class="stat-grid" style="margin-bottom:16px;">
       <div class="stat-tile">
@@ -1415,6 +1489,7 @@ function renderAnalytics(data) {
         <div class="stat-tile-val">¥${totalDays > 0 ? Math.round(totalSales / totalDays).toLocaleString() : 0}</div>
         <div class="stat-tile-lbl">1日平均売上</div>
       </div>
+      ${saleTypeTiles}
     </div>`;
 
   // 商品別ランキング棒グラフ
