@@ -1161,7 +1161,12 @@ async function saveSales() {
   const today  = new Date();
   const days   = ['日','月','火','水','木','金','土'];
   const dateInput = document.getElementById('salesDate').value;
-  const salesDate = dateInput ? new Date(dateInput) : today;
+  let salesDate = today;
+  if (dateInput) {
+    // Safari対応: YYYY/MM/DD または YYYY-MM-DD どちらでもパース
+    const parts = dateInput.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (parts) salesDate = new Date(parseInt(parts[1]), parseInt(parts[2])-1, parseInt(parts[3]));
+  }
   const payload = {
     type: 'sales',
     date: salesDate.toLocaleDateString('ja-JP'),
@@ -1181,12 +1186,10 @@ async function saveSales() {
   const btn = document.getElementById('saveSalesBtn');
   btn.textContent = '送信中...'; btn.disabled = true;
   try {
-    const res = await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
-    const json = await res.json();
-    if (json.status === 'ok') {
-      toast('✅ 販売記録を保存しました！');
-      resetSales();
-    } else { toast('❌ 保存失敗'); }
+    await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
+    // no-corsではレスポンス本文が読めないため、例外が出なければ送信成功とみなす
+    toast('✅ 販売記録を保存しました！');
+    resetSales();
   } catch(e) { toast('❌ エラー：' + e.message); }
   finally { saving = false; btn.textContent = '💾 販売記録を保存'; btn.disabled = false; }
 }
@@ -1211,6 +1214,9 @@ function resetSales() {
   document.getElementById('reservationField').style.display = 'none';
   document.getElementById('reservationSelect').value = '';
   document.getElementById('reservationName').value = '';
+  // 日付を今日にリセット
+  { const t=new Date(); const y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0');
+    document.getElementById('salesDate').value=`${y}-${m}-${d}`; }
   updateSalesTotal();
 }
 
@@ -1318,10 +1324,8 @@ async function registerCustomer() {
     const btn = document.getElementById('regBtn');
     btn.textContent = '送信中...'; btn.disabled = true;
     try {
-      const res = await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
-      const json = await res.json();
-      if (json.status === 'ok') { toast('✅ 登録完了！スプレッドシートに保存しました'); }
-      else { toast('⚠️ ローカル保存のみ（送信失敗）'); }
+      await fetch(gasUrl, { method:'POST', body: JSON.stringify(payload), mode:'no-cors' });
+      toast('✅ 登録完了！スプレッドシートに保存しました');
     } catch(e) { toast('⚠️ ローカル保存のみ（オフライン）'); }
     finally { saving = false; btn.textContent = '✅ 登録する'; btn.disabled = false; }
   } else { toast('✅ ローカルに登録しました（GAS URL未設定）'); }
